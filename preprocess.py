@@ -76,21 +76,21 @@ def clean_field(data: pd.DataFrame, column_name: str, mapping_data: str):
     print('清洗%s字段'%column_name)
     mapping_data = pd.read_excel(mapping_data)
     mapping_dict = {}
-    if ('原始名' not in mapping_data.columns) or ('标准名' not in mapping_data.columns):
-        print('WARNING！！！名称映射表格式不正确，名称映射表必须包含原始名、标准名两列')
+    if ('origin_name' not in mapping_data.columns) or ('standard_name' not in mapping_data.columns):
+        print('WARNING！！！名称映射表格式不正确，名称映射表必须包含origin_name、standard_name两列')
         return
     for i,r in mapping_data.iterrows():
-        if pd.isna(r['标准名']):
+        if pd.isna(r['standard_name']):
             continue
-        origin = r['原始名']
+        origin = r['origin_name']
         origin_lower = origin.lower()
         if origin_lower not in mapping_dict:
-            mapping_dict[origin_lower] = r['标准名'].lower()
+            mapping_dict[origin_lower] = r['standard_name'].lower()
         else:
-            if mapping_dict[origin_lower] == r['标准名'].lower():
+            if mapping_dict[origin_lower] == r['standard_name'].lower():
                 continue
             else:
-                print('原始名“%s”存在不同标准名"%s"和"%s"，后续请修改名称映射表'%(origin_lower, mapping_dict[origin_lower], r['标准名'].lower()))
+                print('origin_name“%s”存在不同standard_name"%s"和"%s"，后续请修改名称映射表'%(origin_lower, mapping_dict[origin_lower], r['standard_name'].lower()))
     for i,r in data.iterrows():
         name = r[column_name].lower()
         if name in mapping_dict:
