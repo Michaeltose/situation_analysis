@@ -1,8 +1,11 @@
 from itertools import groupby
-from numpy import append
+
 import pandas as pd
-from preprocess import KEY, COUNTRY, BREADTH, IMPORTANT, APPLICANT, YEAR, HIGH_CITED
 from tqdm import tqdm
+
+from preprocess import (BREADTH, CITED_NUM, HIGH_CITED, IMPORTANT,
+                        INTER_COOP, KEY, Q1, YEAR)
+
 
 def annual_trends(data:pd.DataFrame, by_column:str, year = YEAR):
     '''
@@ -12,7 +15,14 @@ def annual_trends(data:pd.DataFrame, by_column:str, year = YEAR):
         'by':[],
         '总量':[]
     }
-    years = sorted([x for x in set(data[year])])
+    years = []
+    for y in set(data[year]):
+        try:
+            y = int(y)
+            years.append(y)
+        except Exception:
+            continue
+    years = sorted(years)
     annual_trends['by'].append('全部')
     annual_trends['总量'].append(len(set(data[KEY])))
     for y in years:
@@ -93,26 +103,56 @@ def importance_analysis(data:pd.DataFrame, by_column:str):
 
     return importance_result
 
-def high_cited_analysis(data:pd.DataFrame, by_column:str):
+def wos_paper_analysis(data:pd.DataFrame, by_column:str):
     high_cited_result = {
         'by':[],
         '发文数量':[],
-        '高被引论文数量':[]}
+        '高被引论文数量':[],
+        '总被引频次':[],
+        '国际合作论文数量':[], # preprocess中生成国际合作标签
+        'Q1期刊论文数量':[]}
     
     for by, df_i in data.groupby(by_column):
+        # df_i为属于同一国家的所有论文
         high_cited_result['by'].append(by)
         high_cited_result['发文数量'].append(len(set(df_i[KEY])))
-        high_cited_num = len(set(df_i.loc[df_i[HIGH_CITED] == 1, :][KEY]))
+        high_cited_num = len(set(df_i.loc[df_i[HIGH_CITED] == 1, :][KEY]))   # 获取当前国家下标签为高被引的论文key数量
         high_cited_result['高被引论文数量'].append(high_cited_num)
+        inter_coop_num = len(set(df_i.loc[df_i[INTER_COOP] == 1, :][KEY]))
+        high_cited_result['国际合作论文数量'].append(inter_coop_num)
+        q1_num = len(set(df_i.loc[df_i[Q1] == 1, :][KEY]))
+        high_cited_result['Q1期刊论文数量'].append(q1_num)
+        keys = set()
+        cited_num_i = 0 # 当前国家的被引总数
+        for i,r in df_i.iterrows():
+            if r[KEY] not in keys:
+                cited_num_i += r[CITED_NUM]
+                keys.add(r[KEY])
+        high_cited_result['总被引频次'].append(cited_num_i)
+    keys = set()
+    cited_num_all = 0   # 所有论文被引总数
+    for i,r in data.iterrows():
+        if r[KEY] not in keys:
+            cited_num_all += r[CITED_NUM]
+            keys.add(r[KEY])
     
     high_cited_result['by'].append('全部')
-    global_paper_num = len(set(data[KEY]))
-    high_cited_result['发文数量'].append(global_paper_num)
-    high_cited_num_global = len(set(data.loc[data[HIGH_CITED] == 1, :][KEY]))
+    global_paper_num = len(set(data[KEY]))  # 计算不同key的数量
+    high_cited_num_global = len(set(data.loc[data[HIGH_CITED] == 1, :][KEY]))   # 高被引论文总数
+    inter_coop_num_all = len(set(data.loc[data[INTER_COOP] == 1, :][KEY]))  # 国际合作论文总数
+    q1_all = len(set(data.loc[data[Q1] == 1, :][KEY]))  # Q1期刊论文数
+
+    high_cited_result['总被引频次'].append(cited_num_all)
+    high_cited_result['发文数量'].append(global_paper_num)  # 论文总数
     high_cited_result['高被引论文数量'].append(high_cited_num_global)
+    high_cited_result['国际合作论文数量'].append(inter_coop_num_all)
+    high_cited_result['Q1期刊论文数量'].append(q1_all)
 
     high_cited_result = pd.DataFrame(high_cited_result)
-    high_cited_result['高被引占自身总量比例'] = high_cited_result['高被引论文数量'] / high_cited_result['发文数量']
+    high_cited_result['高被引占本国比例'] = high_cited_result['高被引论文数量'] / high_cited_result['发文数量']
     high_cited_result['发文数量占全球总量比例'] = high_cited_result['发文数量'] / global_paper_num
     high_cited_result['高被引占全球高被引总量比例'] = high_cited_result['高被引论文数量'] / high_cited_num_global
+    high_cited_result['篇均被引'] = high_cited_result['总被引频次']/ high_cited_result['发文数量']
+    high_cited_result['国际合作论文占本国论文总量比例'] = high_cited_result['国际合作论文数量'] / high_cited_result['发文数量']
+    high_cited_result['国际合作论文数量占国际合作论文总量比例'] = high_cited_result['国际合作论文数量'] / inter_coop_num_all
     return high_cited_result

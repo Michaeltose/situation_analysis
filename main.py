@@ -9,7 +9,7 @@ from pathlib2 import Path
 
 KEY_COLUMN = '公开（公告）号'
 KEY_COLUMN_PAPER = 'UT'
-CAS_THESAURUS_LOC = '/Users/biomap/Documents/school wroks/patent_analysis/utils/中科院各所叙词表-论文.xlsx'
+CAS_THESAURUS_LOC = '/Users/biomap/Documents/school wroks/situation_analysis/utils/中科院各所叙词表-论文.xlsx'
 
 def run_standard_patent(data_loc, mapping_data_loc, annotation = '', co_country_split = ',', co_applicant_split = '; '):
     '''
@@ -52,25 +52,27 @@ def run_standard_patent(data_loc, mapping_data_loc, annotation = '', co_country_
 def run_standard_paper(dataloc, mapping_data_loc, cas_mapping_data_loc = CAS_THESAURUS_LOC, annotation = '', author_info_column = 'RP', co_operate_split=';'):
     data = load_data(loc = dataloc, key=KEY_COLUMN_PAPER)
     print('拆分合作信息')
-    data = split_cooperate(data, author_info_column, sep = ';')
+    data = split_cooperate(data, author_info_column, sep = co_operate_split)
     print('提取国家机构')
     data = extract_country_institution_wos_paper(data)
     data = clean_field(data, INSTI_PAPER, mapping_data=mapping_data_loc)
+    data.to_excel('/Users/biomap/Documents/school wroks/situation_analysis/temp/cleaned_0401.xlsx')
     data_cas = data.loc[data[INSTI_PAPER] == 'chinese academy of sciences', :]
     data_cas = clean_field(data_cas, INSTI_PAPER_II, mapping_data = cas_mapping_data_loc)
 
     data = get_high_cited_paper(data, column_name=CITED_NUM)
     data = data.loc[:, ['key', 'TI', COUNTRY_PAPER, INSTI_PAPER, INSTI_PAPER_II, YEAR_PAPER, HIGH_CITED]]
-
+    
     data_cas = get_high_cited_paper(data_cas, column_name=CITED_NUM)
     data_cas = data_cas.loc[:, ['key', 'TI', COUNTRY_PAPER, INSTI_PAPER, INSTI_PAPER_II, YEAR_PAPER, HIGH_CITED]]
+
     
-    result_path = Path('/Users/biomap/Documents/school wroks/patent_analysis/result')
+    result_path = Path('/Users/biomap/Documents/school wroks/situation_analysis/result')
     file_name = str(Path(dataloc).name).split('.')[0]
     result_folder = result_path.joinpath(file_name + annotation + '_结果')
     result_folder.mkdir(exist_ok = True)
 
-    temp_path = Path('/Users/biomap/Documents/school wroks/patent_analysis/temp')
+    temp_path = Path('/Users/biomap/Documents/school wroks/situation_analysis/temp')
     temp_folder = temp_path.joinpath(file_name + annotation + '_中间数据')
     temp_folder.mkdir(exist_ok = True)
 
@@ -104,17 +106,21 @@ def run_standard_paper(dataloc, mapping_data_loc, cas_mapping_data_loc = CAS_THE
     trends_cas.to_excel(annual_trends_loc_cas, index=False)
 
 if __name__ == '__main__':
-    run_standard_paper('/Users/biomap/Documents/school wroks/patent_analysis/data/海水鱼论文.xlsx',
-        mapping_data_loc='/Users/biomap/Documents/school wroks/patent_analysis/utils/机构叙词表-论文.xlsx',
+    # run_standard_paper('/Users/biomap/Documents/school wroks/patent_analysis/data/海水鱼论文.xlsx',
+    #     mapping_data_loc='/Users/biomap/Documents/school wroks/patent_analysis/utils/机构叙词表-论文.xlsx',
+    #     annotation='')
+
+    # run_standard_paper('/Users/biomap/Documents/school wroks/patent_analysis/data/淡水鱼论文.xlsx',
+    #     mapping_data_loc='/Users/biomap/Documents/school wroks/patent_analysis/utils/机构叙词表-论文.xlsx',
+    #     annotation='')
+
+    run_standard_paper('/Users/biomap/Documents/school wroks/situation_analysis/temp/0401_new_data.xlsx',
+        mapping_data_loc='/Users/biomap/Documents/school wroks/situation_analysis/utils/机构叙词表-论文.xlsx',
         annotation='')
 
-    run_standard_paper('/Users/biomap/Documents/school wroks/patent_analysis/data/淡水鱼论文.xlsx',
-        mapping_data_loc='/Users/biomap/Documents/school wroks/patent_analysis/utils/机构叙词表-论文.xlsx',
-        annotation='')
-
-    # load_and_merge(folder='/Users/biomap/Documents/school wroks/patent_analysis/data/海水鱼10181条', 
+    # load_and_merge(folder='/Users/biomap/Documents/school wroks/situation_analysis/data/Downloads(1)', 
     #     key=KEY_COLUMN_PAPER, 
-    #     sep = '\t').to_excel('/Users/biomap/Documents/school wroks/patent_analysis/temp/海水鱼论文.xlsx')
+    #     sep = '\t').to_excel('/Users/biomap/Documents/school wroks/situation_analysis/temp/0401_new_data.xlsx')
 
     # run_standard_patent(data_loc='/Users/biomap/Documents/school wroks/patent_analysis/data/海水鱼专利.xls',
     #     mapping_data_loc='/Users/biomap/Documents/school wroks/patent_analysis/utils/专利机构清洗-不合并中科院.xlsx',
