@@ -13,11 +13,12 @@ import re
 机构：申请人
 '''
 YEAR_SOURCE = '公开（公告）日'
-YEAR = '公开年'
+YEAR = 'year'
+PATENT_TYPE = '专利类型'
 COUNTRY = '申请人国别代码'
 KEY = 'key'
 KEY_PATENT = '公开（公告）号'
-IMPORTANT = '是否重要专利'
+IMPORTANT = '合享价值度10'
 BREADTH = '广度'
 TITLE = '标题'
 ABS = '摘要'
@@ -135,7 +136,7 @@ def clean_field(data: pd.DataFrame, column_name: str, mapping_data: str):
             else:
                 print('origin_name: “%s”存在不同standard_name: "%s"和"%s"，后续请修改名称映射表'%(origin, mapping_dict[origin_lower], r['standard_name']))
     data[column_name + '_Cleaned'] = [0] * len(data)
-    for i,r in data.iterrows():
+    for i,r in tqdm(data.iterrows()):
         name = r[column_name].lower()
         if name in mapping_dict:
             data.loc[i, column_name] = mapping_dict[name]
@@ -237,16 +238,13 @@ def get_processed_data_patent(data:pd.DataFrame):
     '''
     获取年份、是否重要专利、专利广度
     '''
-    data[YEAR] = ''
     data[IMPORTANT] = ''
     data[BREADTH] = ''
     for i,r in tqdm(data.iterrows()):
-        year = str(r[YEAR_SOURCE]).split('-')[0]
         if_important = 0
         if r[IMPORTANCE_VALUE] == 10:
             if_important = 1
-        breadth_value = len(r[GROUP_NATION].split(', '))
-        data.loc[i, YEAR] = year
+        breadth_value = len(r[GROUP_NATION].split(','))
         data.loc[i, BREADTH] = breadth_value
         data.loc[i, IMPORTANT] = if_important
     

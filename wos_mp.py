@@ -6,22 +6,23 @@ from pathlib2 import Path
 from tqdm import tqdm
 
 from config import RESULT_FOLDER, TEMP_FOLDER, SEPTOR
-from preprocess import (COLUMNS, NEW_ADD,extract_country_institution_wos_paper,
-                        load_data_wos, split_cooperate)
+from preprocess import (COLUMNS, NEW_ADD, clean_field,extract_country_institution_wos_paper,
+                        load_data_wos, split_cooperate, clean_field)
 from utils.utils import cut_data
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     # parser.add_argument('-h', help = '帮助信息')
-    parser.add_argument('-l', '--loc', help = '文件路径', type = str, default = '/Users/biomap/Documents/school wroks/220616任务/WOS BP-土壤与肥料.csv')
+    parser.add_argument('-l', '--loc', help = '文件路径', type = str, default = '/Users/biomap/Documents/school works/220616任务/WOS BP-土壤与肥料.csv')
     parser.add_argument('-c', '--column', help = '待处理的列', type = str, default = 'C1')
     parser.add_argument('-n', '--num', help = '进程数量', type = int, default = 16)
-    # parser.add_argument('-s', '--sep', help = '拆分合作关系的分隔符,以"; ["为分隔符拆分C1；以";"为分隔符拆分RP', type = str, default = r'; \[')
+    parser.add_argument('-m', '--mapping', help = '叙词表地址', type= str, default= '/Users/biomap/Documents/school works/situation_analysis/utils/机构叙词表-整理.xlsx')
     args = parser.parse_args()
 
     loc = Path(args.loc)
     column = args.column
     num = args.num
+    mapping = args.mapping
     sep = SEPTOR[column]
 
     data = load_data_wos(loc, key = 'UT', sep = ',')
@@ -81,15 +82,14 @@ if __name__ == '__main__':
     # data_inst = extract_country_institution_wos_paper(split_data, column = column)
     print('提取机构后数据量', len(data_inst))
     file = job_dir_tmp.joinpath(job_name + '_' + column + '_机构国家.xlsx')
-    data_inst.loc[:, COLUMNS + NEW_ADD].to_excel(file, index=False)
+    data_inst = data_inst.loc[:, COLUMNS + NEW_ADD]
+    data_inst.to_excel(file, index=False)
 
-    # # 进行机构清洗
-    # print('清洗机构')
-    # #data_inst = pd.read_excel('/Users/biomap/Documents/school wroks/situation_analysis/temp/WOS BP-土壤与肥料/WOS BP-土壤与肥料_C1_机构国家.xlsx')
-    # mapping = '/Users/biomap/Documents/school wroks/situation_analysis/utils/机构叙词表-论文0622.xlsx'
-    # data_inst = clean_field(data_inst, column_name= '机构', mapping_data=mapping)
-    # job_dir_rslt = result_folder.joinpath(job_name)
-    # job_dir_rslt.mkdir(exist_ok = True)
-    # file = job_dir_rslt.joinpath(job_name + '_' + column + '_清洗后机构.xlsx')
-    # data_inst.to_excel(file, index=False)
+    # 进行机构清洗
+    print('清洗机构')
+    #data_inst = pd.read_excel('/Users/biomap/Documents/school wroks/situation_analysis/temp/WOS BP-土壤与肥料/WOS BP-土壤与肥料_C1_机构国家.xlsx')
+    
+    data_inst = clean_field(data_inst, column_name= '机构', mapping_data=mapping)
+    file = job_dir_tmp.joinpath(job_name + '_' + column + '_清洗后机构.xlsx')
+    data_inst.to_excel(file, index=False)
 

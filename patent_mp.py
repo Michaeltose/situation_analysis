@@ -5,7 +5,7 @@ from utils.utils import cut_data
 from preprocess import clean_field, load_data_patent, get_processed_data_patent, split_cooperate
 from preprocess import extract_country_institution_wos_paper, get_high_cited_paper
 from preprocess import APPLICANT, COUNTRY, COUNTRY_PAPER, INSTI_PAPER, INSTI_PAPER_II, YEAR_PAPER, HIGH_CITED, CITED_NUM, YEAR, KEY, KEY_PATENT
-from analysis import annual_trends_patent, importance_analysis, annual_trends, high_cited_analysis
+from analysis import annual_trends_patent, importance_analysis, annual_trends
 from pathlib2 import Path
 from config import TEMP_FOLDER, RESULT_FOLDER
 from utils.refine_thesaurus import to_lower

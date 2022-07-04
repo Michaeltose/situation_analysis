@@ -4,10 +4,10 @@ import pandas as pd
 from tqdm import tqdm
 
 from preprocess import (BREADTH, CITED_NUM, HIGH_CITED, IMPORTANT,
-                        INTER_COOP, KEY, Q1, YEAR)
+                        PATENT_TYPE, INTER_COOP, KEY, Q1, YEAR, YEAR_PAPER, get_processed_data_patent)
 
 
-def annual_trends(data:pd.DataFrame, by_column:str, year = YEAR):
+def annual_trends(data:pd.DataFrame, by_column:str, year = YEAR_PAPER):
     '''
     按照特定字段分析年度趋势
     '''
@@ -54,18 +54,27 @@ def annual_trends_patent(data:pd.DataFrame, by_column:str, year = '公开（公�
         'by':[],
         '总量':[]
     }
-    times = list(set([x.year for x in data[year]]))
+    times = []
+    data[YEAR] = 0
+    for i,r in data.iterrows():
+        try:
+            y = r[year].year
+        except Exception:
+            y = 0
+        times.append(y)
+        data.loc[i, YEAR] = y
+    times = list(set(times))
     years = sorted(times)
     annual_trends['by'].append('全部')
     annual_trends['总量'].append(len(set(data[KEY])))
     for y in years:
         annual_trends[str(y)] = []
-        annual_trends[str(y)].append(len(set(data.loc[data[year] == y, :][KEY])))
+        annual_trends[str(y)].append(len(set(data.loc[data[YEAR] == y, :][KEY])))
 
     for by, df_i in tqdm(data.groupby(by_column)):
         year_counts = {}
         for y in years:
-            df_iy = df_i.loc[df_i[year] == y, :]
+            df_iy = df_i.loc[df_i[YEAR] == y, :]
             if len(df_iy) != 0:
                 year_counts[str(y)] = len(set(df_iy[KEY]))
             else:
@@ -80,26 +89,34 @@ def annual_trends_patent(data:pd.DataFrame, by_column:str, year = '公开（公�
     return annual_trends
 
 def importance_analysis(data:pd.DataFrame, by_column:str):
+    data = get_processed_data_patent(data)
     importance_result = {
         'by':[],
         '专利总量':[],
+        '发明授权专利量':[],
         '专利布局广度':[],
-        '重要专利数量':[]}
-    for by, df_i in data.groupby(by_column):
+        '合享值10的专利数量':[]}
+    for by, df_i in tqdm(data.groupby(by_column)):
         importance_result['by'].append(by)
         importance_result['专利总量'].append(len(set(df_i[KEY])))
         importance_result['专利布局广度'].append(sum(df_i[BREADTH]) / importance_result['专利总量'][-1])
-        importance_result['重要专利数量'].append(len(set(df_i.loc[df_i[IMPORTANT] == 1, :][KEY])))
+        importance_result['合享值10的专利数量'].append(len(set(df_i.loc[df_i[IMPORTANT] == 1, :][KEY])))
+        importance_result['发明授权专利量'].append(len(set(df_i.loc[df_i[PATENT_TYPE] == '发明授权', :][KEY])))
     
     importance_result['by'].append('全部')
-    importance_result['专利总量'].append(len(set(data[KEY])))
+    patent_all = len(set(data[KEY]))
+    importance_result['专利总量'].append(patent_all)
     importance_result['专利布局广度'].append(sum(data[BREADTH]) / importance_result['专利总量'][-1])
-    importance_result['重要专利数量'].append(len(data.loc[data[IMPORTANT] == 1, :][KEY]))
+    importance_result['合享值10的专利数量'].append(len(data.loc[data[IMPORTANT] == 1, :][KEY]))
+    invent_num = len(set(data.loc[data[PATENT_TYPE] == '发明授权', :][KEY]))
+    importance_result['发明授权专利量'].append(invent_num)
 
     importance_result = pd.DataFrame(importance_result)
     importance_result['专利总量占全球比例'] = importance_result['专利总量'] / int(importance_result.loc[importance_result['by'] == '全部', '专利总量'])
-    importance_result['重要专利数量全球占比'] = importance_result['重要专利数量'] / int(importance_result.loc[importance_result['by'] == '全部', '重要专利数量'])
-    importance_result['重要专利占自身比例'] = importance_result['重要专利数量'] / importance_result['专利总量']
+    importance_result['合享值10的专利数量占全球发明授权专利比例'] = importance_result['合享值10的专利数量'] / invent_num
+    importance_result['合享值10的专利数量占国家发明授权专利比例'] = importance_result['合享值10的专利数量'] / importance_result['发明授权专利量']
+    importance_result['发明授权专利占全球比例'] = importance_result['发明授权专利量'] / patent_all
+    importance_result['合享值10的专利数量占全球发明专利比例'] = importance_result['合享值10的专利数量'] / invent_num
 
     return importance_result
 
