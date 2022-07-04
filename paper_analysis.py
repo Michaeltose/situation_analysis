@@ -35,6 +35,7 @@ if __name__ == '__main__':
     data = pd.read_excel(loc)
     print('计算中间结果')
     annual = annual_trends(data, by_column='国家')
+    annual_inst = annual_trends(data, by_column='机构')
     data = get_international_cooperate(get_high_cited_paper(data))
 
     q1_list = load_q1_journals(journal, field)
@@ -52,6 +53,7 @@ if __name__ == '__main__':
     result_nation.to_excel(file_nation, index = False)
     result_inst.to_excel(file_inst, index = False)
     annual.to_excel(job_dir_rslt.joinpath(job_name + '_国家发文量.xlsx'), index = False)
+    annual_inst.to_excel(job_dir_rslt.joinpath(job_name + '_机构发文量.xlsx'), index = False)
 
     
 
