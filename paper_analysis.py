@@ -1,4 +1,5 @@
 from preprocess import get_high_cited_paper, get_international_cooperate, get_if_q1
+from preprocess import TYPE
 from analysis import wos_paper_analysis, annual_trends
 from argparse import ArgumentParser
 from config import RESULT_FOLDER
@@ -33,6 +34,7 @@ if __name__ == '__main__':
     job_dir_rslt = result_folder.joinpath(job_name)
     job_dir_rslt.mkdir(exist_ok = True)
     data = pd.read_excel(loc)
+    data = data.loc[data[TYPE].str.contains('Article'),:]
     print('计算中间结果')
     annual = annual_trends(data, by_column='国家')
     annual_inst = annual_trends(data, by_column='机构')

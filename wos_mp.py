@@ -6,7 +6,7 @@ from pathlib2 import Path
 from tqdm import tqdm
 
 from config import RESULT_FOLDER, TEMP_FOLDER, SEPTOR
-from preprocess import (COLUMNS, NEW_ADD, clean_field,extract_country_institution_wos_paper,
+from preprocess import (COLUMNS, NEW_ADD, TYPE, clean_field,extract_country_institution_wos_paper,
                         load_data_wos, split_cooperate, clean_field)
 from utils.utils import cut_data
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--loc', help = '文件路径', type = str, default = '/Users/biomap/Documents/school works/220616任务/WOS BP-土壤与肥料.csv')
     parser.add_argument('-c', '--column', help = '待处理的列', type = str, default = 'C1')
     parser.add_argument('-n', '--num', help = '进程数量', type = int, default = 16)
-    parser.add_argument('-m', '--mapping', help = '叙词表地址', type= str, default= '/Users/biomap/Documents/school works/situation_analysis/utils/机构叙词表-整理.xlsx')
+    parser.add_argument('-m', '--mapping', help = '叙词表地址', type= str, default= '/Users/biomap/Documents/school works/situation_analysis/utils/机构叙词表-新.xlsx')
     args = parser.parse_args()
 
     loc = Path(args.loc)
@@ -26,7 +26,10 @@ if __name__ == '__main__':
     sep = SEPTOR[column]
 
     data = load_data_wos(loc, key = 'UT', sep = ',')
-    
+    print('筛选文献类型', len(data))
+    data = data.loc[data[TYPE].str.contains('Article'),:]
+    print('筛选后', len(data))
+
     print(data.columns)
     loc = Path(loc)
     temp_folder = Path(TEMP_FOLDER)
