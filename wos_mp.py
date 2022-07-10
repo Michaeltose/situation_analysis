@@ -9,14 +9,17 @@ from config import RESULT_FOLDER, TEMP_FOLDER, SEPTOR
 from preprocess import (COLUMNS, NEW_ADD, TYPE, clean_field,extract_country_institution_wos_paper,
                         load_data_wos, split_cooperate, clean_field)
 from utils.utils import cut_data
+import gc
+import os
 
 if __name__ == '__main__':
+    pwd = Path(str(os.getcwd()))
     parser = ArgumentParser()
     # parser.add_argument('-h', help = '帮助信息')
-    parser.add_argument('-l', '--loc', help = '文件路径', type = str, default = '/Users/biomap/Documents/school works/220616任务/WOS BP-土壤与肥料.csv')
+    parser.add_argument('-l', '--loc', help = '文件路径', type = str, default = 'd:/WOS BP-土壤与肥料.csv')
     parser.add_argument('-c', '--column', help = '待处理的列', type = str, default = 'C1')
     parser.add_argument('-n', '--num', help = '进程数量', type = int, default = 16)
-    parser.add_argument('-m', '--mapping', help = '叙词表地址', type= str, default= '/Users/biomap/Documents/school works/situation_analysis/utils/机构叙词表-新.xlsx')
+    parser.add_argument('-m', '--mapping', help = '叙词表地址', type= str, default= 'd:/机构叙词表-新.xlsx')
     args = parser.parse_args()
 
     loc = Path(args.loc)
@@ -27,18 +30,19 @@ if __name__ == '__main__':
 
     data = load_data_wos(loc, key = 'UT', sep = ',')
     print('筛选文献类型', len(data))
-    data = data.loc[data[TYPE].str.contains('Article'),:]
+    data = data.loc[data[TYPE].str.contains('Article'),COLUMNS]
+    gc.collect()
+
     print('筛选后', len(data))
 
     print(data.columns)
     loc = Path(loc)
-    temp_folder = Path(TEMP_FOLDER)
-    result_folder = Path(RESULT_FOLDER)
+    temp_folder = pwd.joinpath(TEMP_FOLDER)
     job_name = loc.name.split('.')[0]
     print('任务名称:', job_name)
     # 创建任务保存地址
     job_dir_tmp = temp_folder.joinpath(job_name)
-    job_dir_tmp.mkdir(exist_ok = True)
+    job_dir_tmp.mkdir(exist_ok = True, parents=True)
     
     # 开始处理
 
@@ -68,7 +72,7 @@ if __name__ == '__main__':
 
     # 提取机构国家
     split_data_list = cut_data(split_data, num)
-
+    gc.collect()
     print('并行提取机构国家')
     extract_param_list = [(data, column) for data in split_data_list]
     pool = multiprocessing.Pool(processes = num)
