@@ -30,6 +30,7 @@ if __name__ == '__main__':
 
     data = load_data_wos(loc, key = 'UT', sep = ',')
     print('筛选文献类型', len(data))
+    data[TYPE] = data[TYPE].astype('str')
     data = data.loc[data[TYPE].str.contains('Article'),COLUMNS]
     gc.collect()
 
