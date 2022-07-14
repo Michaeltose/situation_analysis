@@ -15,10 +15,11 @@ from argparse import ArgumentParser
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-l', '--loc', help= '文件路径', type = str, default= '/Users/biomap/Documents/school wroks/220616任务/Incopat-兽医.xls')
+    parser.add_argument('-l', '--loc', help= '文件路径', type = str, default= '/Users/biomap/Documents/school works/220616任务/Incopat-土壤与肥料.xlsx')
     parser.add_argument('-c', '--column', help = '待处理的列', type = str, default = APPLICANT)
     parser.add_argument('-n', '--num', help = '进程数量', type = int, default = 8)
     parser.add_argument('-s', '--sep', help = '拆分合作关系的分隔符；国家为"; "机构为", "', type = str, default = ', ')
+    parser.add_argument('-m', '--mapping', help = '叙词表地址', type= str, default= '/Users/biomap/Documents/school works/situation_analysis/utils/专利叙词表-整理.xlsx')
     args = parser.parse_args()
 
     loc = args.loc
@@ -37,8 +38,6 @@ if __name__ == '__main__':
     # 创建任务保存地址
     job_dir_tmp = temp_folder.joinpath(job_name)
     job_dir_tmp.mkdir(exist_ok = True)
-    job_dir_rslt = result_folder.joinpath(job_name)
-    job_dir_rslt.mkdir(exist_ok = True)
 
 
     print('处理前数据量', len(data))
@@ -61,6 +60,10 @@ if __name__ == '__main__':
     print('拆分合作后数据量', len(split_data))
     file = job_dir_tmp.joinpath(job_name + '_' + column + '_拆分合作.xlsx')
     split_data.to_excel(file, index=False)
+
+    data_inst = clean_field(split_data, column_name= APPLICANT, mapping_data=args.mapping)
+    file = job_dir_tmp.joinpath(job_name + '_' + column + '_清洗后机构.xlsx')
+    data_inst.to_excel(file, index=False)
 
 
 
